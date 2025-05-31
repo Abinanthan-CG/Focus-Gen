@@ -1,9 +1,10 @@
+
 import ClockFeature from '@/components/clock-feature';
 import WorldClocksDisplay from '@/components/world-clocks-display';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Clock | NovaFocus',
+  title: 'Clock | Focus Gen',
 };
 
 export default function ClockPage() {

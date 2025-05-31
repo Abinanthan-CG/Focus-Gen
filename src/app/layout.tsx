@@ -1,11 +1,12 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: 'NovaFocus',
-  description: 'Enhance productivity with NovaFocus tools.',
+  title: 'Focus Gen',
+  description: 'Enhance productivity with Focus Gen tools.',
 };
 
 export default function RootLayout({

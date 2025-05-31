@@ -97,7 +97,7 @@ export default function CountdownFeature() {
       setTriggerFinishAnimation(true);
       if (timerRef.current) clearInterval(timerRef.current);
       toast({
-        title: "Countdown Finished!",
+        title: "Timer Finished!",
         description: "Your timer has reached zero.",
       });
       const animationTimer = setTimeout(() => setTriggerFinishAnimation(false), 1000); 
@@ -245,7 +245,7 @@ export default function CountdownFeature() {
         triggerFinishAnimation && "animate-brief-flash"
       )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-medium font-headline">Countdown Timer</CardTitle>
+        <CardTitle className="text-2xl font-medium font-headline">Timer</CardTitle>
         <div className="flex items-center gap-2">
            <span className="text-sm text-muted-foreground">{getVisualStyleNameCountdown(currentVisualStyle)}</span>
            <HourglassIcon className="h-6 w-6 text-muted-foreground" />
@@ -428,4 +428,3 @@ export default function CountdownFeature() {
     </Card>
   );
 }
-
