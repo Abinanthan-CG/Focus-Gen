@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -6,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { CoffeeIcon, Play, Pause, RotateCcw, SkipForward } from 'lucide-react';
+import { CoffeeIcon, Play, Pause, RotateCcw, SkipForward, Circle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 type SessionType = 'work' | 'shortBreak' | 'longBreak';
 
@@ -26,6 +28,25 @@ export default function PomodoroFeature() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
+  const getSessionName = useCallback((session: SessionType) => {
+    if (session === 'work') return 'Work';
+    if (session === 'shortBreak') return 'Short Break';
+    return 'Long Break';
+  }, []);
+
+  const [displayedSessionTitle, setDisplayedSessionTitle] = useState(getSessionName(currentSession));
+  const [titleOpacity, setTitleOpacity] = useState(1);
+
+  useEffect(() => {
+    setTitleOpacity(0);
+    const timeoutId = setTimeout(() => {
+      setDisplayedSessionTitle(getSessionName(currentSession));
+      setTitleOpacity(1);
+    }, 300); // Duration of fade out
+    return () => clearTimeout(timeoutId);
+  }, [currentSession, getSessionName]);
+
+
   const updateTimerSettings = useCallback(() => {
     if (currentSession === 'work') setTimeLeft(workDuration);
     else if (currentSession === 'shortBreak') setTimeLeft(shortBreakDuration);
@@ -38,6 +59,28 @@ export default function PomodoroFeature() {
     }
   }, [workDuration, shortBreakDuration, longBreakDuration, cyclesBeforeLongBreak, currentSession, isRunning, updateTimerSettings]);
 
+  const handleSessionEnd = useCallback(() => {
+    setIsRunning(false);
+    let nextSession: SessionType;
+    let cycles = completedCycles;
+
+    if (currentSession === 'work') {
+      cycles++;
+      setCompletedCycles(cycles);
+      if (cycles > 0 && cycles % cyclesBeforeLongBreak === 0) {
+        nextSession = 'longBreak';
+      } else {
+        nextSession = 'shortBreak';
+      }
+      toast({ title: "Work Session Over!", description: `Time for a ${getSessionName(nextSession)}.`});
+    } else { 
+      nextSession = 'work';
+      toast({ title: "Break Over!", description: "Time to get back to work."});
+    }
+    
+    setCurrentSession(nextSession);
+  }, [currentSession, completedCycles, cyclesBeforeLongBreak, toast, getSessionName]);
+  
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       timerRef.current = setInterval(() => {
@@ -50,32 +93,8 @@ export default function PomodoroFeature() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, timeLeft]);
-
-  const handleSessionEnd = () => {
-    setIsRunning(false);
-    let nextSession: SessionType;
-    let cycles = completedCycles;
-
-    if (currentSession === 'work') {
-      cycles++;
-      setCompletedCycles(cycles);
-      if (cycles % cyclesBeforeLongBreak === 0) {
-        nextSession = 'longBreak';
-      } else {
-        nextSession = 'shortBreak';
-      }
-      toast({ title: "Work Session Over!", description: `Time for a ${nextSession === 'longBreak' ? 'long' : 'short'} break.`});
-    } else { // currentSession is 'shortBreak' or 'longBreak'
-      nextSession = 'work';
-      toast({ title: "Break Over!", description: "Time to get back to work."});
-    }
-    
-    setCurrentSession(nextSession);
-    // TimeLeft will be updated by the useEffect watching currentSession and durations
-  };
+  }, [isRunning, timeLeft, handleSessionEnd]);
   
-  // Effect to update timeLeft when session changes and not running
   useEffect(() => {
     if (!isRunning) {
       if (currentSession === 'work') setTimeLeft(workDuration);
@@ -97,7 +116,6 @@ export default function PomodoroFeature() {
   const handleSkip = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     handleSessionEnd();
-    //setIsRunning(true); // Optionally auto-start next session
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -114,11 +132,38 @@ export default function PomodoroFeature() {
 
   const progress = (timeLeft / getInitialDuration()) * 100;
 
-  const getSessionName = (session: SessionType) => {
-    if (session === 'work') return 'Work';
-    if (session === 'shortBreak') return 'Short Break';
-    return 'Long Break';
+  const timeDisplayColor = currentSession === 'work' ? 'text-primary' : 'text-accent';
+  const progressBarColorClass = currentSession === 'work' ? '[&>div]:bg-primary' : '[&>div]:bg-accent';
+
+  const renderCycleIndicators = () => {
+    const indicators = [];
+    let filledCount = 0;
+
+    if (currentSession === 'work') {
+      filledCount = completedCycles % cyclesBeforeLongBreak;
+    } else if (currentSession === 'shortBreak') {
+      filledCount = completedCycles % cyclesBeforeLongBreak;
+      if (filledCount === 0 && completedCycles > 0) { // Should not happen if logic is right, but as safeguard
+         filledCount = cyclesBeforeLongBreak;
+      }
+    } else if (currentSession === 'longBreak') {
+      filledCount = cyclesBeforeLongBreak;
+    }
+
+    for (let i = 0; i < cyclesBeforeLongBreak; i++) {
+      indicators.push(
+        <Circle
+          key={i}
+          className={cn(
+            "h-3 w-3 transition-colors duration-300",
+            i < filledCount ? "fill-primary text-primary" : "fill-muted text-muted"
+          )}
+        />
+      );
+    }
+    return <div className="flex justify-center space-x-1.5 mb-1">{indicators}</div>;
   };
+
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-lg">
@@ -133,14 +178,28 @@ export default function PomodoroFeature() {
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="timer">
-            <div className="text-center mb-4">
-              <p className="text-xl font-semibold text-accent font-headline">{getSessionName(currentSession)}</p>
-              <p className="text-sm text-muted-foreground">Completed Cycles: {completedCycles}</p>
+            <div className="text-center mb-2">
+              <p 
+                className="text-xl font-semibold font-headline transition-opacity duration-300 ease-in-out"
+                style={{ opacity: titleOpacity }}
+              >
+                {displayedSessionTitle}
+              </p>
+              {renderCycleIndicators()}
             </div>
-            <div className="text-7xl font-bold text-center py-8 text-primary tabular-nums font-headline">
+            <div 
+              key={currentSession + "-time"} 
+              className={cn(
+                "text-7xl font-bold text-center py-8 tabular-nums font-headline",
+                timeDisplayColor
+              )}
+            >
               {formatTime(timeLeft)}
             </div>
-            <Progress value={isRunning ? 100 - progress : 100} className="mb-6 h-3 [&>div]:bg-accent" />
+            <Progress 
+              value={isRunning ? 100 - progress : 100} 
+              className={cn("mb-6 h-3", progressBarColorClass)}
+            />
             <div className="flex justify-center space-x-2">
               <Button onClick={handleStartPause} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
@@ -158,19 +217,19 @@ export default function PomodoroFeature() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="workDuration">Work Duration (minutes)</Label>
-                <Input id="workDuration" type="number" min="1" value={workDuration / 60} onChange={e => setWorkDuration(parseInt(e.target.value) * 60)} disabled={isRunning} />
+                <Input id="workDuration" type="number" min="1" value={workDuration / 60} onChange={e => setWorkDuration(Math.max(1, parseInt(e.target.value) || 1) * 60)} disabled={isRunning} />
               </div>
               <div>
                 <Label htmlFor="shortBreakDuration">Short Break (minutes)</Label>
-                <Input id="shortBreakDuration" type="number" min="1" value={shortBreakDuration / 60} onChange={e => setShortBreakDuration(parseInt(e.target.value) * 60)} disabled={isRunning} />
+                <Input id="shortBreakDuration" type="number" min="1" value={shortBreakDuration / 60} onChange={e => setShortBreakDuration(Math.max(1, parseInt(e.target.value) || 1) * 60)} disabled={isRunning} />
               </div>
               <div>
                 <Label htmlFor="longBreakDuration">Long Break (minutes)</Label>
-                <Input id="longBreakDuration" type="number" min="1" value={longBreakDuration / 60} onChange={e => setLongBreakDuration(parseInt(e.target.value) * 60)} disabled={isRunning} />
+                <Input id="longBreakDuration" type="number" min="1" value={longBreakDuration / 60} onChange={e => setLongBreakDuration(Math.max(1, parseInt(e.target.value) || 1) * 60)} disabled={isRunning} />
               </div>
               <div>
                 <Label htmlFor="cycles">Cycles before Long Break</Label>
-                <Input id="cycles" type="number" min="1" value={cyclesBeforeLongBreak} onChange={e => setCyclesBeforeLongBreak(parseInt(e.target.value))} disabled={isRunning} />
+                <Input id="cycles" type="number" min="1" value={cyclesBeforeLongBreak} onChange={e => setCyclesBeforeLongBreak(Math.max(1, parseInt(e.target.value) || 1))} disabled={isRunning} />
               </div>
             </div>
           </TabsContent>
@@ -184,3 +243,4 @@ export default function PomodoroFeature() {
     </Card>
   );
 }
+
