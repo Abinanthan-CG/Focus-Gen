@@ -89,7 +89,7 @@ Contributions are welcome! If you have suggestions or want to improve Focus Gen,
 
 ## License
 
-(Specify your license here, e.g., MIT License. If not specified, it's often assumed to be proprietary or unlicensed.)
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
