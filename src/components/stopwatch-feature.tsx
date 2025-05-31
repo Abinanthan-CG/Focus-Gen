@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -6,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { TimerIcon, Play, Pause, RotateCcw, Flag } from 'lucide-react';
+
+const RADIUS = 90; // Radius of the progress circle
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export default function StopwatchFeature() {
   const [time, setTime] = useState(0);
@@ -26,7 +30,7 @@ export default function StopwatchFeature() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, time]);
+  }, [isRunning, time]); // time dependency re-added to ensure startTimeRef is correct if time is set externally (though not current case)
 
   const handleStart = () => setIsRunning(true);
   const handleStop = () => setIsRunning(false);
@@ -50,6 +54,9 @@ export default function StopwatchFeature() {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
   };
 
+  const millisecondsProgress = (time % 1000) / 1000; // 0 to 1
+  const strokeDashoffset = CIRCUMFERENCE * (1 - millisecondsProgress);
+
   return (
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -57,9 +64,40 @@ export default function StopwatchFeature() {
         <TimerIcon className="h-6 w-6 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-6xl font-bold text-center py-8 text-primary tabular-nums font-headline">
-          {formatTime(time)}
+        <div className="relative flex justify-center items-center w-56 h-56 mx-auto my-4">
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+            {/* Background track for the circle */}
+            <circle
+              className="stroke-muted/30"
+              strokeWidth="8"
+              fill="transparent"
+              r={RADIUS}
+              cx="100"
+              cy="100"
+            />
+            {/* Progress arc */}
+            <circle
+              className="stroke-accent"
+              strokeWidth="8"
+              strokeLinecap="round"
+              fill="transparent"
+              r={RADIUS}
+              cx="100"
+              cy="100"
+              style={{
+                strokeDasharray: CIRCUMFERENCE,
+                strokeDashoffset: strokeDashoffset,
+                transform: 'rotate(-90deg)',
+                transformOrigin: 'center',
+                transition: 'stroke-dashoffset 0.01s linear' // Smooth transition for rapidly changing values
+              }}
+            />
+          </svg>
+          <div className="text-5xl font-bold text-primary tabular-nums font-headline z-10">
+            {formatTime(time)}
+          </div>
         </div>
+        
         <div className="flex justify-center space-x-2 mb-6">
           {!isRunning ? (
             <Button onClick={handleStart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -102,3 +140,4 @@ export default function StopwatchFeature() {
     </Card>
   );
 }
+
