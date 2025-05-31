@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { CoffeeIcon, Play, Pause, RotateCcw, SkipForward, Circle } from 'lucide-react';
+import { CoffeeIcon, Play, Pause, RotateCcw, SkipForward, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import PixelTomatoDisplay from './pixel-tomato-display';
 
 type SessionType = 'work' | 'shortBreak' | 'longBreak';
+const VISUAL_STYLES_POMODORO = ['classic', 'pixel-tomato', 'minimal'] as const;
+type VisualStylePomodoro = typeof VISUAL_STYLES_POMODORO[number];
 
 export default function PomodoroFeature() {
   const [workDuration, setWorkDuration] = useState(25 * 60);
@@ -28,8 +31,11 @@ export default function PomodoroFeature() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
+  const [currentVisualStyleIndex, setCurrentVisualStyleIndex] = useState(0);
+  const currentVisualStyle = VISUAL_STYLES_POMODORO[currentVisualStyleIndex];
+
   const getSessionName = useCallback((session: SessionType) => {
-    if (session === 'work') return 'Work';
+    if (session === 'work') return 'Work Focus';
     if (session === 'shortBreak') return 'Short Break';
     return 'Long Break';
   }, []);
@@ -42,10 +48,9 @@ export default function PomodoroFeature() {
     const timeoutId = setTimeout(() => {
       setDisplayedSessionTitle(getSessionName(currentSession));
       setTitleOpacity(1);
-    }, 300); // Duration of fade out
+    }, 300); 
     return () => clearTimeout(timeoutId);
   }, [currentSession, getSessionName]);
-
 
   const updateTimerSettings = useCallback(() => {
     if (currentSession === 'work') setTimeLeft(workDuration);
@@ -103,7 +108,6 @@ export default function PomodoroFeature() {
     }
   }, [currentSession, workDuration, shortBreakDuration, longBreakDuration, isRunning]);
 
-
   const handleStartPause = () => setIsRunning(prev => !prev);
   
   const handleReset = () => {
@@ -136,6 +140,7 @@ export default function PomodoroFeature() {
   const progressBarColorClass = currentSession === 'work' ? '[&>div]:bg-primary' : '[&>div]:bg-accent';
 
   const renderCycleIndicators = () => {
+    if (currentVisualStyle === 'pixel-tomato' || currentVisualStyle === 'minimal') return null;
     const indicators = [];
     let filledCount = 0;
 
@@ -143,9 +148,6 @@ export default function PomodoroFeature() {
       filledCount = completedCycles % cyclesBeforeLongBreak;
     } else if (currentSession === 'shortBreak') {
       filledCount = completedCycles % cyclesBeforeLongBreak;
-      if (filledCount === 0 && completedCycles > 0) { // Should not happen if logic is right, but as safeguard
-         filledCount = cyclesBeforeLongBreak;
-      }
     } else if (currentSession === 'longBreak') {
       filledCount = cyclesBeforeLongBreak;
     }
@@ -156,7 +158,7 @@ export default function PomodoroFeature() {
           key={i}
           className={cn(
             "h-3 w-3 transition-colors duration-300",
-            i < filledCount ? "fill-primary text-primary" : "fill-muted text-muted"
+            i < filledCount ? (currentSession === 'work' || currentSession === 'longBreak' ? "fill-primary text-primary" : "fill-accent text-accent") : "fill-muted text-muted"
           )}
         />
       );
@@ -164,12 +166,36 @@ export default function PomodoroFeature() {
     return <div className="flex justify-center space-x-1.5 mb-1">{indicators}</div>;
   };
 
+  const nextStyle = () => {
+    setCurrentVisualStyleIndex((prevIndex) => (prevIndex + 1) % VISUAL_STYLES_POMODORO.length);
+  };
+
+  const prevStyle = () => {
+    setCurrentVisualStyleIndex((prevIndex) => (prevIndex - 1 + VISUAL_STYLES_POMODORO.length) % VISUAL_STYLES_POMODORO.length);
+  };
+
+  const getVisualStyleNamePomodoro = (style: VisualStylePomodoro) => {
+    switch(style) {
+      case 'classic': return 'Classic';
+      case 'pixel-tomato': return 'Pixel Tomato';
+      case 'minimal': return 'Minimal';
+      default: 
+        const _exhaustiveCheck: never = style;
+        return '';
+    }
+  };
+
+  const initialDurationForCurrentSession = getInitialDuration();
+
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-2xl font-medium font-headline">Pomodoro Timer</CardTitle>
-        <CoffeeIcon className="h-6 w-6 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+           <span className="text-sm text-muted-foreground">{getVisualStyleNamePomodoro(currentVisualStyle)}</span>
+           <CoffeeIcon className="h-6 w-6 text-muted-foreground" />
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="timer" className="w-full">
@@ -178,28 +204,74 @@ export default function PomodoroFeature() {
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="timer">
-            <div className="text-center mb-2">
-              <p 
-                className="text-xl font-semibold font-headline transition-opacity duration-300 ease-in-out"
-                style={{ opacity: titleOpacity }}
-              >
-                {displayedSessionTitle}
-              </p>
-              {renderCycleIndicators()}
+            <div className="flex justify-center items-center space-x-1 sm:space-x-2 mb-2">
+                <Button variant="ghost" size="icon" onClick={prevStyle} aria-label="Previous visual style">
+                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <div className="flex-grow text-center">
+                    <p 
+                        className="text-xl font-semibold font-headline transition-opacity duration-300 ease-in-out"
+                        style={{ opacity: titleOpacity }}
+                    >
+                        {displayedSessionTitle}
+                    </p>
+                    {renderCycleIndicators()}
+                </div>
+                <Button variant="ghost" size="icon" onClick={nextStyle} aria-label="Next visual style">
+                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
             </div>
-            <div 
-              key={currentSession + "-time"} 
-              className={cn(
-                "text-7xl font-bold text-center py-8 tabular-nums font-headline",
-                timeDisplayColor
-              )}
-            >
-              {formatTime(timeLeft)}
-            </div>
-            <Progress 
-              value={isRunning ? 100 - progress : 100} 
-              className={cn("mb-6 h-3", progressBarColorClass)}
-            />
+
+            {currentVisualStyle === 'classic' && (
+                <>
+                    <div 
+                    key={currentSession + "-time-classic"} 
+                    className={cn(
+                        "text-7xl font-bold text-center py-8 tabular-nums font-headline",
+                        timeDisplayColor
+                    )}
+                    >
+                    {formatTime(timeLeft)}
+                    </div>
+                    <Progress 
+                    value={isRunning ? 100 - progress : 100} 
+                    className={cn("mb-6 h-3", progressBarColorClass)}
+                    />
+                </>
+            )}
+
+            {currentVisualStyle === 'pixel-tomato' && (
+                <>
+                    <div 
+                        key={currentSession + "-time-pixel"} 
+                        className={cn(
+                            "text-5xl font-bold text-center py-2 tabular-nums font-headline",
+                            timeDisplayColor
+                        )}
+                        >
+                        {formatTime(timeLeft)}
+                    </div>
+                    <PixelTomatoDisplay 
+                        timeLeft={timeLeft} 
+                        initialDuration={initialDurationForCurrentSession} 
+                        sessionType={currentSession} 
+                    />
+                </>
+            )}
+            
+            {currentVisualStyle === 'minimal' && (
+                 <div 
+                    key={currentSession + "-time-minimal"} 
+                    className={cn(
+                        "text-7xl font-bold text-center py-16 tabular-nums font-headline", // More padding as no progress bar
+                        timeDisplayColor
+                    )}
+                    >
+                    {formatTime(timeLeft)}
+                </div>
+            )}
+
+
             <div className="flex justify-center space-x-2">
               <Button onClick={handleStartPause} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
@@ -237,10 +309,10 @@ export default function PomodoroFeature() {
       </CardContent>
        <CardFooter>
         <p className="text-xs text-center text-muted-foreground w-full">
-          Boost your productivity with focused work intervals.
+          {currentVisualStyle === 'pixel-tomato' ? "Watch the tomato! " : ""}
+          Boost productivity with focused intervals. Use arrows to change style.
         </p>
       </CardFooter>
     </Card>
   );
 }
-
