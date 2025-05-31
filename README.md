@@ -37,7 +37,6 @@ Follow these instructions to get a local copy of Focus Gen up and running on you
 ### Installation & Running Locally ⚙️
 
 1.  **Clone the repository:**
-    Replace `<repository_url>` with the actual URL of your Git repository.
     ```bash
     git clone https://github.com/Abinanthan-CG/Focus-Gen.git
     ```
