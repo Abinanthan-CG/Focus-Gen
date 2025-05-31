@@ -17,6 +17,31 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const VISUAL_STYLES = ['arc60s', 'pulseOnRun', 'minimal'] as const;
 type VisualStyle = typeof VISUAL_STYLES[number];
 
+// LapEntryDisplay Component for individual lap item with animation and highlight
+const LapEntryDisplay = ({ lapTime, lapNumber, isHighlighted, formatTime }: { lapTime: number, lapNumber: number, isHighlighted: boolean, formatTime: (ms: number) => string }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Trigger animation shortly after mount
+    const timer = setTimeout(() => setIsVisible(true), 10); // Small delay for CSS transition
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array, runs once on mount
+
+  return (
+    <li
+      className={cn(
+        "flex justify-between text-sm p-1 rounded transition-all duration-300 ease-out",
+        isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4", // Slide from left and fade in
+        isHighlighted ? "bg-accent/30 scale-105 shadow-md" : "bg-muted/50 shadow-sm"
+      )}
+    >
+      <span>Lap {lapNumber}</span>
+      <span className="font-mono">{formatTime(lapTime)}</span>
+    </li>
+  );
+};
+
+
 export default function StopwatchFeature() {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -26,6 +51,9 @@ export default function StopwatchFeature() {
 
   const [currentVisualStyleIndex, setCurrentVisualStyleIndex] = useState(0);
   const currentVisualStyle = VISUAL_STYLES[currentVisualStyleIndex];
+  
+  const [newestLapIndex, setNewestLapIndex] = useState<number | null>(null);
+
 
   useEffect(() => {
     if (isRunning) {
@@ -48,11 +76,22 @@ export default function StopwatchFeature() {
     setIsRunning(false);
     setTime(0);
     setLaps([]);
+    setNewestLapIndex(null);
   };
   
   const handleLap = () => {
     if (isRunning) {
-      setLaps(prevLaps => [...prevLaps, time]);
+      setLaps(prevLaps => {
+        const newLaps = [...prevLaps, time];
+        setNewestLapIndex(newLaps.length - 1); // Index of the just added lap
+        
+        // Automatically remove highlight after a short duration
+        setTimeout(() => {
+          setNewestLapIndex(null);
+        }, 1000); // Highlight duration: 1 second
+        
+        return newLaps;
+      });
     }
   };
 
@@ -69,8 +108,7 @@ export default function StopwatchFeature() {
       const secondsProgress = currentSecondsInMinute / 60; 
       return CIRCUMFERENCE * (1 - secondsProgress);
     }
-    // Removed 'arcMs' logic
-    return CIRCUMFERENCE; // Hidden for other styles or default for minimal
+    return CIRCUMFERENCE; 
   };
 
   const strokeDashoffset = calculateStrokeDashoffset();
@@ -86,7 +124,6 @@ export default function StopwatchFeature() {
   const getVisualStyleName = (style: VisualStyle) => {
     switch(style) {
       case 'arc60s': return '60s Arc';
-      // Removed 'MS Arc' case
       case 'pulseOnRun': return 'Pulse on Run';
       case 'minimal': return 'Minimal';
       default: 
@@ -134,7 +171,7 @@ export default function StopwatchFeature() {
                     strokeDashoffset: strokeDashoffset,
                     transform: 'rotate(-90deg)',
                     transformOrigin: 'center',
-                    transition: 'none' // Keep 'none' for 60s arc, 'arcMs' had linear transition
+                    transition: 'stroke-dashoffset 0.1s linear' // Smoother transition for arc
                   }}
                 />
               </svg>
@@ -176,10 +213,13 @@ export default function StopwatchFeature() {
             <ScrollArea className="h-40 w-full rounded-md border p-2">
               <ul className="space-y-1">
                 {laps.map((lapTime, index) => (
-                  <li key={index} className="flex justify-between text-sm p-1 bg-muted/50 rounded">
-                    <span>Lap {index + 1}</span>
-                    <span className="font-mono">{formatTime(lapTime)}</span>
-                  </li>
+                  <LapEntryDisplay
+                    key={`${lapTime}-${index}`} // Using index for key as laps are append-only here
+                    lapTime={lapTime}
+                    lapNumber={index + 1}
+                    isHighlighted={index === newestLapIndex}
+                    formatTime={formatTime}
+                  />
                 ))}
               </ul>
             </ScrollArea>
