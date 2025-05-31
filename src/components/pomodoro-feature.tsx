@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import PixelTomatoDisplay from './pixel-tomato-display';
 
 type SessionType = 'work' | 'shortBreak' | 'longBreak';
-const VISUAL_STYLES_POMODORO = ['classic', 'pixel-tomato', 'minimal'] as const;
+const VISUAL_STYLES_POMODORO = ['classic', 'pixel-tomato'] as const;
 type VisualStylePomodoro = typeof VISUAL_STYLES_POMODORO[number];
 
 export default function PomodoroFeature() {
@@ -140,7 +140,7 @@ export default function PomodoroFeature() {
   const progressBarColorClass = currentSession === 'work' ? '[&>div]:bg-primary' : '[&>div]:bg-accent';
 
   const renderCycleIndicators = () => {
-    if (currentVisualStyle === 'pixel-tomato' || currentVisualStyle === 'minimal') return null;
+    if (currentVisualStyle === 'pixel-tomato') return null;
     const indicators = [];
     let filledCount = 0;
 
@@ -178,7 +178,6 @@ export default function PomodoroFeature() {
     switch(style) {
       case 'classic': return 'Classic';
       case 'pixel-tomato': return 'Pixel Tomato';
-      case 'minimal': return 'Minimal';
       default: 
         const _exhaustiveCheck: never = style;
         return '';
@@ -186,7 +185,6 @@ export default function PomodoroFeature() {
   };
 
   const initialDurationForCurrentSession = getInitialDuration();
-
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-lg">
@@ -204,73 +202,64 @@ export default function PomodoroFeature() {
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="timer">
-            <div className="flex justify-center items-center space-x-1 sm:space-x-2 mb-2">
+            <div className="text-center mb-4">
+                <p 
+                    className="text-xl font-semibold font-headline transition-opacity duration-300 ease-in-out"
+                    style={{ opacity: titleOpacity }}
+                >
+                    {displayedSessionTitle}
+                </p>
+                {currentVisualStyle === 'classic' && renderCycleIndicators()}
+            </div>
+
+            <div className="flex justify-center items-center space-x-1 sm:space-x-2 my-4">
                 <Button variant="ghost" size="icon" onClick={prevStyle} aria-label="Previous visual style">
                   <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
-                <div className="flex-grow text-center">
-                    <p 
-                        className="text-xl font-semibold font-headline transition-opacity duration-300 ease-in-out"
-                        style={{ opacity: titleOpacity }}
-                    >
-                        {displayedSessionTitle}
-                    </p>
-                    {renderCycleIndicators()}
+                
+                <div className="flex flex-col items-center">
+                    {currentVisualStyle === 'classic' && (
+                        <div className="w-full flex flex-col items-center">
+                            <div 
+                            key={currentSession + "-time-classic"} 
+                            className={cn(
+                                "text-7xl font-bold text-center py-8 tabular-nums font-headline",
+                                timeDisplayColor
+                            )}
+                            >
+                            {formatTime(timeLeft)}
+                            </div>
+                            <Progress 
+                            value={isRunning ? 100 - progress : 100} 
+                            className={cn("mb-6 h-3 w-56", progressBarColorClass)} // Added w-56 for defined width
+                            />
+                        </div>
+                    )}
+
+                    {currentVisualStyle === 'pixel-tomato' && (
+                        <div className="flex flex-col items-center">
+                            <div 
+                                key={currentSession + "-time-pixel"} 
+                                className={cn(
+                                    "text-5xl font-bold text-center py-2 tabular-nums font-headline",
+                                    timeDisplayColor
+                                )}
+                                >
+                                {formatTime(timeLeft)}
+                            </div>
+                            <PixelTomatoDisplay 
+                                timeLeft={timeLeft} 
+                                initialDuration={initialDurationForCurrentSession} 
+                                sessionType={currentSession} 
+                            />
+                        </div>
+                    )}
                 </div>
+                
                 <Button variant="ghost" size="icon" onClick={nextStyle} aria-label="Next visual style">
                   <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
             </div>
-
-            {currentVisualStyle === 'classic' && (
-                <>
-                    <div 
-                    key={currentSession + "-time-classic"} 
-                    className={cn(
-                        "text-7xl font-bold text-center py-8 tabular-nums font-headline",
-                        timeDisplayColor
-                    )}
-                    >
-                    {formatTime(timeLeft)}
-                    </div>
-                    <Progress 
-                    value={isRunning ? 100 - progress : 100} 
-                    className={cn("mb-6 h-3", progressBarColorClass)}
-                    />
-                </>
-            )}
-
-            {currentVisualStyle === 'pixel-tomato' && (
-                <>
-                    <div 
-                        key={currentSession + "-time-pixel"} 
-                        className={cn(
-                            "text-5xl font-bold text-center py-2 tabular-nums font-headline",
-                            timeDisplayColor
-                        )}
-                        >
-                        {formatTime(timeLeft)}
-                    </div>
-                    <PixelTomatoDisplay 
-                        timeLeft={timeLeft} 
-                        initialDuration={initialDurationForCurrentSession} 
-                        sessionType={currentSession} 
-                    />
-                </>
-            )}
-            
-            {currentVisualStyle === 'minimal' && (
-                 <div 
-                    key={currentSession + "-time-minimal"} 
-                    className={cn(
-                        "text-7xl font-bold text-center py-16 tabular-nums font-headline", // More padding as no progress bar
-                        timeDisplayColor
-                    )}
-                    >
-                    {formatTime(timeLeft)}
-                </div>
-            )}
-
 
             <div className="flex justify-center space-x-2">
               <Button onClick={handleStartPause} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -316,3 +305,4 @@ export default function PomodoroFeature() {
     </Card>
   );
 }
+
