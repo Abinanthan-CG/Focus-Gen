@@ -14,7 +14,7 @@ const VIEWBOX_SIZE = 210;
 const CENTER_XY = VIEWBOX_SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-const VISUAL_STYLES = ['arc60s', 'pulseOnRun', 'minimal'] as const;
+const VISUAL_STYLES = ['arc60s', 'minimal'] as const;
 type VisualStyle = typeof VISUAL_STYLES[number];
 
 // LapEntryDisplay Component for individual lap item with animation and highlight
@@ -124,7 +124,6 @@ export default function StopwatchFeature() {
   const getVisualStyleName = (style: VisualStyle) => {
     switch(style) {
       case 'arc60s': return '60s Arc';
-      case 'pulseOnRun': return 'Pulse on Run';
       case 'minimal': return 'Minimal';
       default: 
         const _exhaustiveCheck: never = style;
@@ -133,10 +132,7 @@ export default function StopwatchFeature() {
   }
 
   return (
-    <Card className={cn(
-      "w-full max-w-lg mx-auto shadow-lg",
-      currentVisualStyle === 'pulseOnRun' && isRunning && "ring-2 ring-accent animate-pulse"
-    )}>
+    <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-2xl font-medium font-headline">Stopwatch</CardTitle>
         <div className="flex items-center gap-2">
