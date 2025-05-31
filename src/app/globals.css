@@ -25,7 +25,7 @@
     --accent: 160 44.4% 60.2%; /* #66CDAA Soft Teal */
     --accent-foreground: 0 0% 10%; /* Dark text for contrast on teal */
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 75% 68%; /* Softer Red */
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 80%; /* #CCCCCC */

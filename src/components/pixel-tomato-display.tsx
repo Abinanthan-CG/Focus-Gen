@@ -12,29 +12,27 @@ interface PixelTomatoDisplayProps {
 
 const GRID_SIZE = 10; // 10x10 grid
 
-// Simple representation of a tomato shape
+// 0: empty, 1: tomato body, 2: leaf
 const TOMATO_SHAPE = [
-  [0,0,0,1,1,1,1,0,0,0],
+  [0,0,0,0,2,2,0,0,0,0], // Leaf
+  [0,0,0,1,1,1,1,0,0,0], // Top of tomato body
   [0,0,1,1,1,1,1,1,0,0],
   [0,1,1,1,1,1,1,1,1,0],
   [1,1,1,1,1,1,1,1,1,1],
   [1,1,1,1,1,1,1,1,1,1],
   [1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1],
   [0,1,1,1,1,1,1,1,1,0],
   [0,0,1,1,1,1,1,1,0,0],
-  [0,0,0,1,1,1,1,0,0,0],
+  [0,0,0,1,1,1,1,0,0,0], 
 ];
 
-const totalActivePixels = TOMATO_SHAPE.flat().reduce((sum, pixel) => sum + pixel, 0);
+const totalBodyPixels = TOMATO_SHAPE.flat().filter(p => p === 1).length;
 
 const PixelTomatoDisplay: FC<PixelTomatoDisplayProps> = ({ timeLeft, initialDuration, sessionType }) => {
   const progress = initialDuration > 0 ? timeLeft / initialDuration : 0;
-  const pixelsToShow = Math.ceil(progress * totalActivePixels);
+  const pixelsToFillForBody = Math.ceil(progress * totalBodyPixels);
+  let filledBodyPixelCount = 0;
 
-  let currentShownPixelCount = 0;
-
-  const pixelColorClass = sessionType === 'work' ? 'bg-destructive' : 'bg-accent';
   const erasedPixelColorClass = 'bg-muted/20';
 
   return (
@@ -44,20 +42,26 @@ const PixelTomatoDisplay: FC<PixelTomatoDisplayProps> = ({ timeLeft, initialDura
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
       >
         {TOMATO_SHAPE.map((row, rowIndex) =>
-          row.map((isPixelActive, colIndex) => {
-            let showThisPixel = false;
-            if (isPixelActive) {
-              currentShownPixelCount++;
-              if (currentShownPixelCount <= pixelsToShow) {
-                showThisPixel = true;
+          row.map((pixelValue, colIndex) => {
+            let cellClass = 'bg-transparent';
+
+            if (pixelValue === 1) { // Tomato Body pixel
+              filledBodyPixelCount++;
+              if (filledBodyPixelCount <= pixelsToFillForBody) {
+                cellClass = sessionType === 'work' ? 'bg-destructive' : 'bg-accent';
+              } else {
+                cellClass = erasedPixelColorClass;
               }
+            } else if (pixelValue === 2) { // Leaf pixel
+              cellClass = 'bg-accent'; // Leaf is always accent color
             }
+
             return (
               <div
                 key={`${rowIndex}-${colIndex}`}
                 className={cn(
                   "w-4 h-4 sm:w-5 sm:h-5 rounded-sm transition-colors duration-300",
-                  isPixelActive && showThisPixel ? pixelColorClass : (isPixelActive ? erasedPixelColorClass : 'bg-transparent')
+                  cellClass
                 )}
               />
             );
