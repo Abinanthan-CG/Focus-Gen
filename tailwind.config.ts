@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -88,10 +89,15 @@ export default {
             height: '0',
           },
         },
+        'brief-flash': {
+          '0%, 100%': { borderColor: 'hsl(var(--border))', boxShadow: 'var(--tw-shadow)' }, // Use CSS var for default shadow if defined, else use a generic one.
+          '50%': { borderColor: 'hsl(var(--accent))', boxShadow: '0 0 12px 2px hsl(var(--accent) / 0.4)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'brief-flash': 'brief-flash 1s ease-out',
       },
     },
   },

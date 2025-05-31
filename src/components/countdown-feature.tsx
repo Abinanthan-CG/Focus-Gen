@@ -2,14 +2,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button, buttonVariants } from "@/components/ui/button"; // Added buttonVariants
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { HourglassIcon, Play, Pause, RotateCcw, Save, Trash2, PlusCircle } from 'lucide-react';
+import { HourglassIcon, Play, Pause, RotateCcw, Save, Trash2, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils"; // Ensure cn is imported
+import { cn } from "@/lib/utils";
 
 const DEFAULT_PRESETS = [
   { label: "Quick Break", seconds: 5 * 60 },
@@ -21,6 +21,15 @@ interface Preset {
   label: string;
   seconds: number;
 }
+
+const VISUAL_STYLES_COUNTDOWN = ['circular', 'linear-intensity', 'minimal'] as const;
+type VisualStyleCountdown = typeof VISUAL_STYLES_COUNTDOWN[number];
+
+// SVG Constants for Circular Progress
+const RADIUS_CD = 90; // Countdown Radius
+const VIEWBOX_SIZE_CD = 200;
+const CENTER_XY_CD = VIEWBOX_SIZE_CD / 2;
+const CIRCUMFERENCE_CD = 2 * Math.PI * RADIUS_CD;
 
 export default function CountdownFeature() {
   const [initialTime, setInitialTime] = useState(DEFAULT_PRESETS[0].seconds); 
@@ -37,6 +46,10 @@ export default function CountdownFeature() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  const [currentVisualStyleIndex, setCurrentVisualStyleIndex] = useState(0);
+  const currentVisualStyle = VISUAL_STYLES_COUNTDOWN[currentVisualStyleIndex];
+  const [triggerFinishAnimation, setTriggerFinishAnimation] = useState(false);
 
   const calculateTotalSeconds = useCallback(() => {
     const h = parseInt(hoursInput, 10) || 0;
@@ -81,12 +94,14 @@ export default function CountdownFeature() {
     } else if (timeLeft <= 0 && isRunning) {
       setIsRunning(false);
       setIsFinished(true);
+      setTriggerFinishAnimation(true);
       if (timerRef.current) clearInterval(timerRef.current);
       toast({
         title: "Countdown Finished!",
         description: "Your timer has reached zero.",
-        variant: "default", 
       });
+      const animationTimer = setTimeout(() => setTriggerFinishAnimation(false), 1000); // Match animation duration
+      return () => clearTimeout(animationTimer);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -108,6 +123,7 @@ export default function CountdownFeature() {
       setIsRunning(true);
       if (isFinished) setIsFinished(false); 
     }
+    setTriggerFinishAnimation(false); // Reset flash on start
   };
   
   const handlePause = () => setIsRunning(false);
@@ -115,6 +131,7 @@ export default function CountdownFeature() {
   const handleReset = () => {
     setIsRunning(false);
     setIsFinished(false);
+    setTriggerFinishAnimation(false);
     const totalSeconds = calculateTotalSeconds();
     setInitialTime(totalSeconds);
     setTimeLeft(totalSeconds);
@@ -128,6 +145,7 @@ export default function CountdownFeature() {
     setMinutesInput(m.toString());
     setSecondsInput(s.toString());
     setIsFinished(false); 
+    setTriggerFinishAnimation(false);
     if (presetLabel) {
         toast({ title: "Preset Applied", description: `Timer set to ${presetLabel} (${formatTime(seconds)}).` });
     }
@@ -172,16 +190,13 @@ export default function CountdownFeature() {
   const handleAddTime = (secondsToAdd: number) => {
     setTimeLeft(prevTimeLeft => {
       const newTimeLeft = prevTimeLeft + secondsToAdd;
-      // Update initialTime if time is added beyond the original initialTime,
-      // so progress bar behaves correctly (doesn't exceed 100% visually if it can't show >100%)
-      // Or, ensure progress calculation handles timeLeft > initialTime gracefully.
-      // For simplicity, let's assume progress bar handles it.
-      // setInitialTime(prevInitial => Math.max(prevInitial, newTimeLeft)); // Alternative: adjust initialTime
       if (isFinished && newTimeLeft > 0) {
-        setIsFinished(false); // If timer was finished, adding time makes it not finished.
+        setIsFinished(false);
+        setTriggerFinishAnimation(false);
       }
       return newTimeLeft;
     });
+    setInitialTime(prevInitial => Math.max(prevInitial, timeLeft + secondsToAdd)); // Adjust initialTime if adding beyond current
   
     toast({
       title: "Time Added",
@@ -189,22 +204,102 @@ export default function CountdownFeature() {
     });
   };
 
+  const nextStyle = () => {
+    setCurrentVisualStyleIndex((prevIndex) => (prevIndex + 1) % VISUAL_STYLES_COUNTDOWN.length);
+  };
+
+  const prevStyle = () => {
+    setCurrentVisualStyleIndex((prevIndex) => (prevIndex - 1 + VISUAL_STYLES_COUNTDOWN.length) % VISUAL_STYLES_COUNTDOWN.length);
+  };
+
+  const getVisualStyleNameCountdown = (style: VisualStyleCountdown) => {
+    switch(style) {
+      case 'circular': return 'Circular';
+      case 'linear-intensity': return 'Intensity';
+      case 'minimal': return 'Minimal';
+      default: 
+        const _exhaustiveCheck: never = style;
+        return '';
+    }
+  };
+
+  const progressRatio = initialTime > 0 ? timeLeft / initialTime : 0;
+  const circularStrokeDashoffset = CIRCUMFERENCE_CD * (1 - progressRatio); // 0 is full, CIRCUMFERENCE_CD is empty
+
   const allPresets = [...DEFAULT_PRESETS, ...customPresets];
   
-  const progressPercentRemaining = initialTime > 0 ? (timeLeft / initialTime) * 100 : (isFinished ? 0 : 100);
+  const linearProgressPercentRemaining = initialTime > 0 ? (timeLeft / initialTime) * 100 : (isFinished ? 0 : 100);
   const showAddTimeSection = isRunning || (timeLeft > 0 && timeLeft < initialTime && !isFinished && initialTime > 0);
 
+  const timeDisplayClasses = cn(
+    "font-bold tabular-nums font-headline",
+    currentVisualStyle === 'circular' ? "text-5xl" : "text-6xl",
+    currentVisualStyle === 'linear-intensity' && isRunning && timeLeft > 0 && timeLeft <= 20 ? "text-destructive transition-colors duration-500" : "text-primary",
+  );
+
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-lg">
+    <Card className={cn(
+        "w-full max-w-lg mx-auto shadow-lg",
+        triggerFinishAnimation && "animate-brief-flash"
+      )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-2xl font-medium font-headline">Countdown Timer</CardTitle>
-        <HourglassIcon className="h-6 w-6 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+           <span className="text-sm text-muted-foreground">{getVisualStyleNameCountdown(currentVisualStyle)}</span>
+           <HourglassIcon className="h-6 w-6 text-muted-foreground" />
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-6xl font-bold text-center py-8 text-primary tabular-nums font-headline">
-          {formatTime(timeLeft)}
+        <div className="flex justify-center items-center space-x-1 sm:space-x-2 my-4">
+            <Button variant="ghost" size="icon" onClick={prevStyle} aria-label="Previous visual style">
+              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+            </Button>
+
+            <div className={cn(
+              "flex justify-center items-center",
+              currentVisualStyle === 'circular' ? "relative w-48 h-48 sm:w-52 sm:h-52" : "py-8" // Adjust padding for non-circular
+            )}>
+              {currentVisualStyle === 'circular' && (
+                <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${VIEWBOX_SIZE_CD} ${VIEWBOX_SIZE_CD}`}>
+                  <circle
+                    className="stroke-muted/30"
+                    strokeWidth="10"
+                    fill="transparent"
+                    r={RADIUS_CD}
+                    cx={CENTER_XY_CD}
+                    cy={CENTER_XY_CD}
+                  />
+                  <circle
+                    className="stroke-accent"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    fill="transparent"
+                    r={RADIUS_CD}
+                    cx={CENTER_XY_CD}
+                    cy={CENTER_XY_CD}
+                    style={{
+                      strokeDasharray: CIRCUMFERENCE_CD,
+                      strokeDashoffset: circularStrokeDashoffset,
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: 'center',
+                      transition: 'stroke-dashoffset 0.25s linear'
+                    }}
+                  />
+                </svg>
+              )}
+              <div className={timeDisplayClasses}>
+                {formatTime(timeLeft)}
+              </div>
+            </div>
+            
+            <Button variant="ghost" size="icon" onClick={nextStyle} aria-label="Next visual style">
+              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+            </Button>
         </div>
-        <Progress value={progressPercentRemaining} className="mb-6 h-3 [&>div]:bg-accent" />
+
+        {currentVisualStyle !== 'circular' && (
+           <Progress value={linearProgressPercentRemaining} className="mb-6 h-3 [&>div]:bg-accent" />
+        )}
         
         {(!isRunning && (!isFinished || timeLeft <=0) ) && (
           <div className="grid grid-cols-3 gap-2 mb-4">
@@ -239,6 +334,7 @@ export default function CountdownFeature() {
             </div>
           </div>
         ) : (
+          (!isRunning && !isFinished || timeLeft <=0) && // Only show presets/save if timer is settable
           <div className="my-6">
             <h3 className="text-lg font-medium mb-3 text-center font-headline">Presets</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
@@ -269,12 +365,12 @@ export default function CountdownFeature() {
                   <span className="font-semibold">{preset.label}</span>
                   <span className="text-xs text-muted-foreground">{formatTime(preset.seconds)}</span>
                   {!DEFAULT_PRESETS.find(dp => dp.label === preset.label) && (
-                    <Button // Inner Button for delete
+                    <Button
                       variant="ghost"
                       size="icon"
                       className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent the div's onClick
+                        e.stopPropagation(); 
                         handleDeleteCustomPreset(preset.label);
                       }}
                       aria-label={`Delete preset ${preset.label}`}
@@ -317,7 +413,7 @@ export default function CountdownFeature() {
 
         <div className="flex justify-center space-x-2">
           {!isRunning ? (
-            <Button onClick={handleStart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinished && timeLeft <=0}>
+            <Button onClick={handleStart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinished && timeLeft <=0 && !calculateTotalSeconds()}>
               <Play className="mr-2 h-5 w-5" /> Start
             </Button>
           ) : (
@@ -335,10 +431,9 @@ export default function CountdownFeature() {
       </CardContent>
       <CardFooter>
         <p className="text-xs text-center text-muted-foreground w-full">
-          Set a timer for focused work sessions or breaks.
+          Set a timer for focused work sessions or breaks. Use arrows to change visual style.
         </p>
       </CardFooter>
     </Card>
   );
 }
-
