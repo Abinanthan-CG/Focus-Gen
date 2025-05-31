@@ -133,7 +133,10 @@ export default function StopwatchFeature() {
   }
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-lg">
+    <Card className={cn(
+      "w-full max-w-lg mx-auto shadow-lg",
+      currentVisualStyle === 'pulseOnRun' && isRunning && "ring-2 ring-accent animate-pulse"
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-2xl font-medium font-headline">Stopwatch</CardTitle>
         <div className="flex items-center gap-2">
@@ -177,8 +180,7 @@ export default function StopwatchFeature() {
               </svg>
             )}
             <div className={cn(
-              "text-4xl sm:text-5xl font-bold tabular-nums font-headline z-10",
-              currentVisualStyle === 'pulseOnRun' && isRunning ? 'text-accent animate-pulse' : 'text-primary'
+              "text-4xl sm:text-5xl font-bold tabular-nums font-headline z-10 text-primary"
             )}>
               {formatTime(time)}
             </div>
@@ -234,3 +236,4 @@ export default function StopwatchFeature() {
     </Card>
   );
 }
+
