@@ -18,7 +18,6 @@ import {
   Coffee,
   CalendarDays,
   ListChecks,
-  // Sparkles, // Removed as AI Assistant is removed
   Settings, // Example for a future settings page
 } from "lucide-react";
 import { cn } from "@/lib/utils";

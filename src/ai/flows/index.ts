@@ -1,5 +1,2 @@
-export { suggestTasks } from './suggest-tasks';
-export type { SuggestTasksInput, SuggestTasksOutput } from './suggest-tasks';
-
-export { summarizeTasks } from './summarize-tasks';
-export type { SummarizeTasksInput, SummarizeTasksOutput } from './summarize-tasks';
+// This file is intentionally left empty after removing AI assistant flows.
+// It can be deleted if no other flows are added to this directory.

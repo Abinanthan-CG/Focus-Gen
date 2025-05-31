@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/summarize-tasks.ts';
-import '@/ai/flows/suggest-tasks.ts';
+// This file primarily contains dotenv configuration.
+// Imports for specific AI flows were removed as part of AI Assistant feature removal.
