@@ -1,20 +1,20 @@
 
-# Focus Gen - Productivity Toolkit
+# Focus Gen - Productivity Toolkit ✨
 
 Focus Gen is a Next.js web application designed to enhance your productivity and time management skills. It provides a suite of essential tools, all in one place, with a clean, modern, and customizable interface.
 
-## Features
+## Features 🚀
 
 Focus Gen currently includes the following tools:
 
-*   **Clock**: Displays the current time in both digital and analog formats. It also includes a world clock display for major cities.
-*   **Stopwatch**: A precision stopwatch with lap functionality. Offers multiple visual styles including a 60-second arc display.
-*   **Timer (Countdown)**: A versatile countdown timer with customizable durations, preset options (including saving your own), and visual styles like circular progress.
-*   **Pomodoro Timer**: Implement the Pomodoro Technique with configurable work, short break, and long break durations. Features visual cycle indicators and distinct themes for work/break sessions, including a unique "Pixel Tomato" style.
-*   **Calendar**: A simple calendar tool allowing you to select dates and manage tasks associated with specific days. Tasks are stored locally in your browser.
-*   **To-Do List**: A straightforward daily to-do list to keep track of your tasks. Tasks are stored locally.
+*   ⏰ **Clock**: Displays the current time in both digital and analog formats. It also includes a world clock display for major cities.
+*   ⏱️ **Stopwatch**: A precision stopwatch with lap functionality. Offers multiple visual styles including a 60-second arc display.
+*   ⏳ **Timer (Countdown)**: A versatile countdown timer with customizable durations, preset options (including saving your own), and visual styles like circular progress.
+*   🍅 **Pomodoro Timer**: Implement the Pomodoro Technique with configurable work, short break, and long break durations. Features visual cycle indicators and distinct themes for work/break sessions, including a unique "Pixel Tomato" style.
+*   🗓️ **Calendar**: A simple calendar tool allowing you to select dates and manage tasks associated with specific days. Tasks are stored locally in your browser.
+*   ✅ **To-Do List**: A straightforward daily to-do list to keep track of your tasks. Tasks are stored locally.
 
-## Core Technologies
+## Core Technologies 🛠️
 
 *   **Next.js**: React framework for server-side rendering and static site generation.
 *   **React**: JavaScript library for building user interfaces.
@@ -24,17 +24,17 @@ Focus Gen currently includes the following tools:
 *   **Lucide React**: Beautifully simple and consistent open-source icons.
 *   **Genkit (Firebase)**: For potential future AI-powered features (currently configured but not actively used in the UI).
 
-## Getting Started
+## Getting Started 🏁
 
 Follow these instructions to get a local copy of Focus Gen up and running on your machine for development and testing purposes.
 
-### Prerequisites
+### Prerequisites 🔧
 
 *   Node.js (v18 or newer recommended)
 *   npm (comes with Node.js) or yarn
 *   Git
 
-### Installation & Running Locally
+### Installation & Running Locally ⚙️
 
 1.  **Clone the repository:**
     Replace `<repository_url>` with the actual URL of your Git repository.
@@ -64,7 +64,7 @@ Follow these instructions to get a local copy of Focus Gen up and running on you
 
     You should now be able to open your browser and navigate to `http://localhost:9002` to see the application running. The page will automatically reload if you make changes to the code.
 
-## Project Structure
+## Project Structure 📂
 
 *   `src/app/`: Contains the main application pages and layouts (using Next.js App Router).
 *   `src/components/`: Houses reusable React components.
@@ -76,22 +76,22 @@ Follow these instructions to get a local copy of Focus Gen up and running on you
 *   `src/ai/`: Genkit configuration and flows (for potential AI features).
 *   `public/`: Static assets.
 
-## Customization
+## Customization 🎨
 
 *   **Theme**: Colors and styling can be primarily adjusted in `src/app/globals.css` (Tailwind CSS and Shadcn theme variables) and `tailwind.config.ts`.
 *   **Components**: Modify or extend components in `src/components/` to change functionality or appearance.
 
-## Contributing
+## Contributing 👋
 
 Contributions are welcome! If you have suggestions or want to improve Focus Gen, please feel free to fork the repository and submit a pull request.
 
 (If you have specific contribution guidelines, add them here.)
 
-## License
+## License 📄
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
 This README provides a solid overview and setup guide for the "Focus Gen" application.
-Enjoy boosting your productivity!
+Enjoy boosting your productivity! 🚀
