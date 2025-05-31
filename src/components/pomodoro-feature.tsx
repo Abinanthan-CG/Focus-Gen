@@ -140,7 +140,6 @@ export default function PomodoroFeature() {
   const progressBarColorClass = currentSession === 'work' ? '[&>div]:bg-primary' : '[&>div]:bg-accent';
 
   const renderCycleIndicators = () => {
-    if (currentVisualStyle === 'pixel-tomato') return null;
     const indicators = [];
     let filledCount = 0;
 
@@ -149,7 +148,7 @@ export default function PomodoroFeature() {
     } else if (currentSession === 'shortBreak') {
       filledCount = completedCycles % cyclesBeforeLongBreak;
     } else if (currentSession === 'longBreak') {
-      filledCount = cyclesBeforeLongBreak;
+      filledCount = cyclesBeforeLongBreak; // All filled during/after long break
     }
 
     for (let i = 0; i < cyclesBeforeLongBreak; i++) {
@@ -163,7 +162,7 @@ export default function PomodoroFeature() {
         />
       );
     }
-    return <div className="flex justify-center space-x-1.5 mb-1">{indicators}</div>;
+    return <div className="flex flex-col space-y-1.5">{indicators}</div>;
   };
 
   const nextStyle = () => {
@@ -209,10 +208,9 @@ export default function PomodoroFeature() {
                 >
                     {displayedSessionTitle}
                 </p>
-                {currentVisualStyle === 'classic' && renderCycleIndicators()}
             </div>
 
-            <div className="flex justify-center items-center space-x-1 sm:space-x-2 my-4">
+            <div className="flex items-center justify-center gap-2 my-4">
                 <Button variant="ghost" size="icon" onClick={prevStyle} aria-label="Previous visual style">
                   <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
@@ -231,7 +229,7 @@ export default function PomodoroFeature() {
                             </div>
                             <Progress 
                             value={isRunning ? 100 - progress : 100} 
-                            className={cn("mb-6 h-3 w-56", progressBarColorClass)} // Added w-56 for defined width
+                            className={cn("mb-6 h-3 w-56", progressBarColorClass)} 
                             />
                         </div>
                     )}
@@ -259,9 +257,15 @@ export default function PomodoroFeature() {
                 <Button variant="ghost" size="icon" onClick={nextStyle} aria-label="Next visual style">
                   <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
+
+                {currentVisualStyle === 'classic' && (
+                  <div className="pl-4"> 
+                    {renderCycleIndicators()}
+                  </div>
+                )}
             </div>
 
-            <div className="flex justify-center space-x-2">
+            <div className="flex justify-center space-x-2 mt-6">
               <Button onClick={handleStartPause} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
                 {isRunning ? 'Pause' : 'Start'}
@@ -305,4 +309,3 @@ export default function PomodoroFeature() {
     </Card>
   );
 }
-
