@@ -148,7 +148,7 @@ export default function PomodoroFeature() {
     } else if (currentSession === 'shortBreak') {
       filledCount = completedCycles % cyclesBeforeLongBreak;
     } else if (currentSession === 'longBreak') {
-      filledCount = cyclesBeforeLongBreak; // All filled during/after long break
+      filledCount = cyclesBeforeLongBreak; 
     }
 
     for (let i = 0; i < cyclesBeforeLongBreak; i++) {
@@ -258,7 +258,7 @@ export default function PomodoroFeature() {
                   <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
 
-                {currentVisualStyle === 'classic' && (
+                {(currentVisualStyle === 'classic' || currentVisualStyle === 'pixel-tomato') && (
                   <div className="pl-4"> 
                     {renderCycleIndicators()}
                   </div>
