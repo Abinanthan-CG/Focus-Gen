@@ -26,8 +26,8 @@ const VISUAL_STYLES_COUNTDOWN = ['circular', 'linear-intensity', 'minimal'] as c
 type VisualStyleCountdown = typeof VISUAL_STYLES_COUNTDOWN[number];
 
 // SVG Constants for Circular Progress
-const RADIUS_CD = 110; // Countdown Radius - Increased
-const VIEWBOX_SIZE_CD = 240; // Increased
+const RADIUS_CD = 110; 
+const VIEWBOX_SIZE_CD = 240; 
 const CENTER_XY_CD = VIEWBOX_SIZE_CD / 2;
 const CIRCUMFERENCE_CD = 2 * Math.PI * RADIUS_CD;
 
@@ -118,11 +118,9 @@ export default function CountdownFeature() {
       setInitialTime(totalSecondsFromInput);
       setTimeLeft(totalSecondsFromInput);
       setIsFinished(false);
-      setIsRunning(true);
-    } else { 
-      setIsRunning(true);
-      if (isFinished) setIsFinished(false); 
-    }
+    } 
+    setIsRunning(true);
+    if (isFinished) setIsFinished(false); 
     setTriggerFinishAnimation(false); 
   };
   
@@ -132,7 +130,7 @@ export default function CountdownFeature() {
     setIsRunning(false);
     setIsFinished(false);
     setTriggerFinishAnimation(false);
-    const totalSeconds = calculateTotalSeconds(); // Recalculate from inputs for reset
+    const totalSeconds = calculateTotalSeconds(); 
     setInitialTime(totalSeconds);
     setTimeLeft(totalSeconds);
   };
@@ -144,7 +142,6 @@ export default function CountdownFeature() {
     setHoursInput(h.toString());
     setMinutesInput(m.toString());
     setSecondsInput(s.toString());
-    // These changes will trigger the useEffect to update initialTime and timeLeft
     setIsFinished(false); 
     setTriggerFinishAnimation(false);
     if (presetLabel) {
@@ -231,18 +228,20 @@ export default function CountdownFeature() {
   
   const linearProgressPercentRemaining = initialTime > 0 ? (timeLeft / initialTime) * 100 : (isFinished ? 0 : 100);
   
-  // Show "Add Time" section if timer is running, or paused with time left (but not at initial full time).
   const showAddTimeSection = isRunning || (timeLeft > 0 && timeLeft < initialTime && !isFinished && initialTime > 0);
-  
-  // Show Time Input & Presets if timer is not running AND (it's at its initial state OR time is zero/finished)
   const showSetupSection = !isRunning && (initialTime === timeLeft || timeLeft <= 0);
 
 
   const timeDisplayClasses = cn(
     "font-bold tabular-nums font-headline",
-    currentVisualStyle === 'circular' ? "text-5xl" : "text-6xl", // text-5xl for circular to fit better
+    currentVisualStyle === 'circular' ? "text-5xl" : "text-6xl", 
     currentVisualStyle === 'linear-intensity' && isRunning && timeLeft > 0 && timeLeft <= 20 ? "text-destructive transition-colors duration-500" : "text-primary",
   );
+
+  const progressIntensityClass = 
+    currentVisualStyle === 'linear-intensity' && isRunning && timeLeft > 0 && timeLeft <= 20 
+    ? "[&>div]:bg-destructive transition-colors duration-500" 
+    : "[&>div]:bg-accent";
 
   return (
     <Card className={cn(
@@ -305,7 +304,7 @@ export default function CountdownFeature() {
         </div>
 
         {currentVisualStyle !== 'circular' && (
-           <Progress value={linearProgressPercentRemaining} className="mb-6 h-3 [&>div]:bg-accent" />
+           <Progress value={linearProgressPercentRemaining} className={cn("mb-6 h-3", progressIntensityClass)} />
         )}
         
         {showSetupSection && (
@@ -332,7 +331,7 @@ export default function CountdownFeature() {
                   <div
                     key={preset.label}
                     role="button"
-                    tabIndex={0} // Always focusable when visible
+                    tabIndex={0} 
                     className={cn(
                       buttonVariants({ variant: "outline" }),
                       "flex-col h-auto p-3 items-center justify-center relative group text-center cursor-pointer"
@@ -409,7 +408,7 @@ export default function CountdownFeature() {
 
         <div className="flex justify-center space-x-2">
           {!isRunning ? (
-            <Button onClick={handleStart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinished && timeLeft <=0 && !calculateTotalSeconds()}>
+            <Button onClick={handleStart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinished && timeLeft <=0 && calculateTotalSeconds() <= 0}>
               <Play className="mr-2 h-5 w-5" /> Start
             </Button>
           ) : (
