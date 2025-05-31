@@ -8,7 +8,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { TimerIcon, Play, Pause, RotateCcw, Flag } from 'lucide-react';
 
-const RADIUS = 90; // Radius of the progress circle
+const RADIUS = 98; // Increased radius
+const VIEWBOX_SIZE = 210; // Adjusted viewBox
+const CENTER_XY = VIEWBOX_SIZE / 2; // Center for new viewBox
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export default function StopwatchFeature() {
@@ -54,8 +56,8 @@ export default function StopwatchFeature() {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
   };
 
-  const currentSecondsInMinute = (time / 1000) % 60; // Seconds part of the current minute (0-59.99...)
-  const secondsProgress = currentSecondsInMinute / 60; // Progress of the current minute (0 to 1)
+  const currentSecondsInMinute = (time / 1000) % 60;
+  const secondsProgress = currentSecondsInMinute / 60; 
   const strokeDashoffset = CIRCUMFERENCE * (1 - secondsProgress);
 
   return (
@@ -65,16 +67,16 @@ export default function StopwatchFeature() {
         <TimerIcon className="h-6 w-6 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="relative flex justify-center items-center w-56 h-56 mx-auto my-4">
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+        <div className={`relative flex justify-center items-center w-60 h-60 mx-auto my-4`}> {/* Increased container size */}
+          <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}>
             {/* Background track for the circle */}
             <circle
               className="stroke-muted/30"
               strokeWidth="8"
               fill="transparent"
               r={RADIUS}
-              cx="100"
-              cy="100"
+              cx={CENTER_XY}
+              cy={CENTER_XY}
             />
             {/* Progress arc */}
             <circle
@@ -83,8 +85,8 @@ export default function StopwatchFeature() {
               strokeLinecap="round"
               fill="transparent"
               r={RADIUS}
-              cx="100"
-              cy="100"
+              cx={CENTER_XY}
+              cy={CENTER_XY}
               style={{
                 strokeDasharray: CIRCUMFERENCE,
                 strokeDashoffset: strokeDashoffset,
@@ -141,3 +143,4 @@ export default function StopwatchFeature() {
     </Card>
   );
 }
+
