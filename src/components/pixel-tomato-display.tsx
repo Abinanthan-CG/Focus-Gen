@@ -34,7 +34,7 @@ const PixelTomatoDisplay: FC<PixelTomatoDisplayProps> = ({ timeLeft, initialDura
 
   let currentShownPixelCount = 0;
 
-  const pixelColorClass = sessionType === 'work' ? 'bg-primary' : 'bg-accent';
+  const pixelColorClass = sessionType === 'work' ? 'bg-destructive' : 'bg-accent';
   const erasedPixelColorClass = 'bg-muted/20';
 
   return (
