@@ -14,7 +14,7 @@ const VIEWBOX_SIZE = 210;
 const CENTER_XY = VIEWBOX_SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-const VISUAL_STYLES = ['arc60s', 'arcMs', 'pulseOnRun', 'minimal'] as const;
+const VISUAL_STYLES = ['arc60s', 'pulseOnRun', 'minimal'] as const;
 type VisualStyle = typeof VISUAL_STYLES[number];
 
 export default function StopwatchFeature() {
@@ -69,12 +69,8 @@ export default function StopwatchFeature() {
       const secondsProgress = currentSecondsInMinute / 60; 
       return CIRCUMFERENCE * (1 - secondsProgress);
     }
-    if (currentVisualStyle === 'arcMs') {
-      const currentMillisecondsInSecond = time % 1000;
-      const msProgress = currentMillisecondsInSecond / 1000;
-      return CIRCUMFERENCE * (1 - msProgress);
-    }
-    return CIRCUMFERENCE; // Hidden for other styles
+    // Removed 'arcMs' logic
+    return CIRCUMFERENCE; // Hidden for other styles or default for minimal
   };
 
   const strokeDashoffset = calculateStrokeDashoffset();
@@ -90,10 +86,12 @@ export default function StopwatchFeature() {
   const getVisualStyleName = (style: VisualStyle) => {
     switch(style) {
       case 'arc60s': return '60s Arc';
-      case 'arcMs': return 'MS Arc';
+      // Removed 'MS Arc' case
       case 'pulseOnRun': return 'Pulse on Run';
       case 'minimal': return 'Minimal';
-      default: return '';
+      default: 
+        const _exhaustiveCheck: never = style;
+        return '';
     }
   }
 
@@ -113,7 +111,7 @@ export default function StopwatchFeature() {
           </Button>
           
           <div className="relative flex justify-center items-center w-48 h-48 sm:w-60 sm:h-60">
-            {(currentVisualStyle === 'arc60s' || currentVisualStyle === 'arcMs') && (
+            {currentVisualStyle === 'arc60s' && (
               <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}>
                 <circle
                   className="stroke-muted/30"
@@ -136,7 +134,7 @@ export default function StopwatchFeature() {
                     strokeDashoffset: strokeDashoffset,
                     transform: 'rotate(-90deg)',
                     transformOrigin: 'center',
-                    transition: currentVisualStyle === 'arcMs' ? 'stroke-dashoffset 0.01s linear' : 'none'
+                    transition: 'none' // Keep 'none' for 60s arc, 'arcMs' had linear transition
                   }}
                 />
               </svg>
