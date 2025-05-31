@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; // Added buttonVariants
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { HourglassIcon, Play, Pause, RotateCcw, Save, Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils"; // Ensure cn is imported
 
 const DEFAULT_PRESETS = [
   { label: "Quick Break", seconds: 5 * 60 },
@@ -68,9 +69,9 @@ export default function CountdownFeature() {
     if (!isRunning) {
       setInitialTime(totalSeconds);
       setTimeLeft(totalSeconds);
-      setIsFinished(false); // Reset finished state when inputs change
+      setIsFinished(false); 
     }
-  }, [hoursInput, minutesInput, secondsInput, calculateTotalSeconds]); // Removed isRunning dependency
+  }, [hoursInput, minutesInput, secondsInput, calculateTotalSeconds, isRunning]);
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -93,7 +94,7 @@ export default function CountdownFeature() {
   }, [isRunning, timeLeft, toast]);
 
   const handleStart = () => {
-    if (timeLeft <= 0) { // Starting from zero (or less)
+    if (timeLeft <= 0) { 
       const totalSecondsFromInput = calculateTotalSeconds();
       if (totalSecondsFromInput <= 0) {
         toast({ title: "Invalid Time", description: "Please set a duration greater than 0.", variant: "destructive" });
@@ -103,7 +104,7 @@ export default function CountdownFeature() {
       setTimeLeft(totalSecondsFromInput);
       setIsFinished(false);
       setIsRunning(true);
-    } else { // Resuming with existing timeLeft > 0
+    } else { 
       setIsRunning(true);
       if (isFinished) setIsFinished(false); 
     }
@@ -126,8 +127,7 @@ export default function CountdownFeature() {
     setHoursInput(h.toString());
     setMinutesInput(m.toString());
     setSecondsInput(s.toString());
-    // useEffect watching inputs will update initialTime and timeLeft
-    setIsFinished(false); // Applying a preset implies it's not finished
+    setIsFinished(false); 
     if (presetLabel) {
         toast({ title: "Preset Applied", description: `Timer set to ${presetLabel} (${formatTime(seconds)}).` });
     }
@@ -172,8 +172,13 @@ export default function CountdownFeature() {
   const handleAddTime = (secondsToAdd: number) => {
     setTimeLeft(prevTimeLeft => {
       const newTimeLeft = prevTimeLeft + secondsToAdd;
+      // Update initialTime if time is added beyond the original initialTime,
+      // so progress bar behaves correctly (doesn't exceed 100% visually if it can't show >100%)
+      // Or, ensure progress calculation handles timeLeft > initialTime gracefully.
+      // For simplicity, let's assume progress bar handles it.
+      // setInitialTime(prevInitial => Math.max(prevInitial, newTimeLeft)); // Alternative: adjust initialTime
       if (isFinished && newTimeLeft > 0) {
-        setIsFinished(false);
+        setIsFinished(false); // If timer was finished, adding time makes it not finished.
       }
       return newTimeLeft;
     });
@@ -186,12 +191,7 @@ export default function CountdownFeature() {
 
   const allPresets = [...DEFAULT_PRESETS, ...customPresets];
   
-  // Progress: percentage of time remaining. Can exceed 100% if time is added past initialTime.
-  // Progress component will visually clamp at 100% (full) or 0% (empty).
   const progressPercentRemaining = initialTime > 0 ? (timeLeft / initialTime) * 100 : (isFinished ? 0 : 100);
-
-  // Show "Add Time" section if timer is running or paused mid-way.
-  // `initialTime > 0` ensures it has been set. `timeLeft < initialTime` implies it has started ticking.
   const showAddTimeSection = isRunning || (timeLeft > 0 && timeLeft < initialTime && !isFinished && initialTime > 0);
 
   return (
@@ -206,7 +206,6 @@ export default function CountdownFeature() {
         </div>
         <Progress value={progressPercentRemaining} className="mb-6 h-3 [&>div]:bg-accent" />
         
-        {/* Show time inputs only if timer is not running AND not finished (or finished but timeLeft is 0) */}
         {(!isRunning && (!isFinished || timeLeft <=0) ) && (
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div>
@@ -244,37 +243,53 @@ export default function CountdownFeature() {
             <h3 className="text-lg font-medium mb-3 text-center font-headline">Presets</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
               {allPresets.map(preset => (
-                <Button
+                <div
                   key={preset.label}
-                  variant="outline"
-                  className="flex flex-col h-auto p-3 items-center justify-center relative group text-center"
-                  onClick={() => applyPreset(preset.seconds, preset.label)}
-                  disabled={isRunning} 
+                  role="button"
+                  tabIndex={isRunning ? -1 : 0}
+                  aria-disabled={isRunning}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "flex-col h-auto p-3 items-center justify-center relative group text-center",
+                    isRunning ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  )}
+                  onClick={() => {
+                    if (!isRunning) {
+                      applyPreset(preset.seconds, preset.label);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      if (!isRunning) {
+                        applyPreset(preset.seconds, preset.label);
+                      }
+                    }
+                  }}
                 >
                   <span className="font-semibold">{preset.label}</span>
                   <span className="text-xs text-muted-foreground">{formatTime(preset.seconds)}</span>
                   {!DEFAULT_PRESETS.find(dp => dp.label === preset.label) && (
-                    <Button
+                    <Button // Inner Button for delete
                       variant="ghost"
                       size="icon"
                       className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80"
                       onClick={(e) => {
-                        e.stopPropagation(); 
+                        e.stopPropagation(); // Prevent the div's onClick
                         handleDeleteCustomPreset(preset.label);
                       }}
                       aria-label={`Delete preset ${preset.label}`}
+                      disabled={isRunning}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                </Button>
+                </div>
               ))}
               {allPresets.length === 0 && (
                   <p className="text-sm text-muted-foreground col-span-full text-center">No presets available. Save one below!</p>
               )}
             </div>
 
-            {/* Save preset section only shows if not running and not showing "Add Time" */}
             {(!isRunning && !showAddTimeSection) && (
               <div className="mt-6 border-t pt-4">
                 <Label htmlFor="presetName" className="mb-1 block font-medium">Preset name to save</Label>
@@ -326,3 +341,4 @@ export default function CountdownFeature() {
     </Card>
   );
 }
+
