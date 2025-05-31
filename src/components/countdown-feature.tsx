@@ -22,7 +22,7 @@ interface Preset {
   seconds: number;
 }
 
-const VISUAL_STYLES_COUNTDOWN = ['circular', 'linear-intensity', 'minimal'] as const;
+const VISUAL_STYLES_COUNTDOWN = ['circular', 'minimal'] as const;
 type VisualStyleCountdown = typeof VISUAL_STYLES_COUNTDOWN[number];
 
 // SVG Constants for Circular Progress
@@ -213,7 +213,6 @@ export default function CountdownFeature() {
   const getVisualStyleNameCountdown = (style: VisualStyleCountdown) => {
     switch(style) {
       case 'circular': return 'Circular';
-      case 'linear-intensity': return 'Intensity';
       case 'minimal': return 'Minimal';
       default: 
         const _exhaustiveCheck: never = style;
@@ -235,13 +234,10 @@ export default function CountdownFeature() {
   const timeDisplayClasses = cn(
     "font-bold tabular-nums font-headline",
     currentVisualStyle === 'circular' ? "text-5xl" : "text-6xl", 
-    currentVisualStyle === 'linear-intensity' && isRunning && timeLeft > 0 && timeLeft <= 20 ? "text-destructive transition-colors duration-500" : "text-primary",
+    "text-primary",
   );
 
-  const progressIntensityClass = 
-    currentVisualStyle === 'linear-intensity' && isRunning && timeLeft > 0 && timeLeft <= 20 
-    ? "[&>div]:bg-destructive transition-colors duration-500" 
-    : "[&>div]:bg-accent";
+  const progressDefaultClass = "[&>div]:bg-accent";
 
   return (
     <Card className={cn(
@@ -304,7 +300,7 @@ export default function CountdownFeature() {
         </div>
 
         {currentVisualStyle !== 'circular' && (
-           <Progress value={linearProgressPercentRemaining} className={cn("mb-6 h-3", progressIntensityClass)} />
+           <Progress value={linearProgressPercentRemaining} className={cn("mb-6 h-3", progressDefaultClass)} />
         )}
         
         {showSetupSection && (
