@@ -30,7 +30,7 @@ export default function StopwatchFeature() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, time]); // time dependency re-added to ensure startTimeRef is correct if time is set externally (though not current case)
+  }, [isRunning, time]);
 
   const handleStart = () => setIsRunning(true);
   const handleStop = () => setIsRunning(false);
@@ -54,8 +54,9 @@ export default function StopwatchFeature() {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
   };
 
-  const millisecondsProgress = (time % 1000) / 1000; // 0 to 1
-  const strokeDashoffset = CIRCUMFERENCE * (1 - millisecondsProgress);
+  const currentSecondsInMinute = (time / 1000) % 60; // Seconds part of the current minute (0-59.99...)
+  const secondsProgress = currentSecondsInMinute / 60; // Progress of the current minute (0 to 1)
+  const strokeDashoffset = CIRCUMFERENCE * (1 - secondsProgress);
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-lg">
@@ -89,7 +90,7 @@ export default function StopwatchFeature() {
                 strokeDashoffset: strokeDashoffset,
                 transform: 'rotate(-90deg)',
                 transformOrigin: 'center',
-                transition: 'stroke-dashoffset 0.01s linear' // Smooth transition for rapidly changing values
+                transition: 'stroke-dashoffset 0.01s linear' 
               }}
             />
           </svg>
@@ -140,4 +141,3 @@ export default function StopwatchFeature() {
     </Card>
   );
 }
-
