@@ -17,11 +17,15 @@ const PixelClockDisplay: FC<PixelClockDisplayProps> = ({ timeString }) => {
     );
   }
   return (
-    <div 
-      className="font-code text-5xl md:text-6xl font-bold text-center text-primary tabular-nums py-8"
+    <div
+      className="font-code text-5xl md:text-6xl font-bold text-center text-primary tabular-nums py-8 subpixel-antialiased"
       style={{
         lineHeight: '1',
-        letterSpacing: '0.05em', // Adjust for pixelated feel
+        letterSpacing: '0.1em', // Increased for a more "blocky" feel
+        fontVariantLigatures: 'none', // Disable ligatures to keep characters distinct
+        imageRendering: 'pixelated', // Hint for sharper, pixel-like rendering
+        // The following are for broader compatibility for crisp rendering, React handles vendor prefixes if needed for standard properties
+        // For non-standard ones, direct CSS or specific class might be better, but 'pixelated' is standard.
       }}
     >
       {timeString.split('').map((char, index) => (
