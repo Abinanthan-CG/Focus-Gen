@@ -1,3 +1,4 @@
+
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,7 +18,7 @@ import {
   Coffee,
   CalendarDays,
   ListChecks,
-  Sparkles,
+  // Sparkles, // Removed as AI Assistant is removed
   Settings, // Example for a future settings page
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,6 @@ const navItems = [
   { href: "/pomodoro", label: "Pomodoro", icon: Coffee },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/todo", label: "To-Do List", icon: ListChecks },
-  { href: "/ai-assistant", label: "AI Assistant", icon: Sparkles },
 ];
 
 export default function AppSidebar() {
