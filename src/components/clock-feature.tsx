@@ -25,9 +25,6 @@ export default function ClockFeature() {
         <div className="text-6xl font-bold text-center py-8 text-primary tabular-nums font-headline">
           {currentTime || "Loading..."}
         </div>
-        <p className="text-xs text-center text-muted-foreground">
-          Time updates every second.
-        </p>
       </CardContent>
     </Card>
   );
