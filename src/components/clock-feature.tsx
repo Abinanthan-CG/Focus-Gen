@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClockIcon } from 'lucide-react';
 import AnalogClockDisplay from './analog-clock-display';
-import PixelClockDisplay from './pixel-clock-display';
 
-type ClockType = 'digital' | 'analog' | 'pixel';
+type ClockType = 'digital' | 'analog';
 
 export default function ClockFeature() {
   const [currentTimeString, setCurrentTimeString] = useState('');
@@ -38,10 +37,9 @@ export default function ClockFeature() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeClockType} onValueChange={(value) => setActiveClockType(value as ClockType)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="digital">Digital</TabsTrigger>
             <TabsTrigger value="analog">Analog</TabsTrigger>
-            <TabsTrigger value="pixel">Pixel</TabsTrigger>
           </TabsList>
           <TabsContent value="digital">
             <div className="text-6xl font-bold text-center py-8 text-primary tabular-nums font-headline">
@@ -51,11 +49,6 @@ export default function ClockFeature() {
           <TabsContent value="analog">
             <div className="flex justify-center items-center py-4 h-64 md:h-72">
               <AnalogClockDisplay date={currentDate} />
-            </div>
-          </TabsContent>
-          <TabsContent value="pixel">
-             <div className="flex justify-center items-center py-4 h-64 md:h-72">
-              <PixelClockDisplay timeString={currentTimeString || "00:00:00"} />
             </div>
           </TabsContent>
         </Tabs>
