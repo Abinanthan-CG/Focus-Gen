@@ -47,7 +47,7 @@ export default function WorldClocksDisplay() {
 
   return (
     <div className="w-full max-w-4xl">
-      <h2 className="text-2xl font-semibold mb-6 text-center font-headline">World Clocks</h2>
+      {/* Removed h2 heading "World Clocks" */}
       {worldClocks.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {worldClocks.map(clock => (
