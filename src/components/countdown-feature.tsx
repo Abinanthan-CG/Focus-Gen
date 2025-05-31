@@ -26,8 +26,8 @@ const VISUAL_STYLES_COUNTDOWN = ['circular', 'linear-intensity', 'minimal'] as c
 type VisualStyleCountdown = typeof VISUAL_STYLES_COUNTDOWN[number];
 
 // SVG Constants for Circular Progress
-const RADIUS_CD = 90; // Countdown Radius
-const VIEWBOX_SIZE_CD = 200;
+const RADIUS_CD = 110; // Countdown Radius - Increased
+const VIEWBOX_SIZE_CD = 240; // Increased
 const CENTER_XY_CD = VIEWBOX_SIZE_CD / 2;
 const CIRCUMFERENCE_CD = 2 * Math.PI * RADIUS_CD;
 
@@ -100,7 +100,7 @@ export default function CountdownFeature() {
         title: "Countdown Finished!",
         description: "Your timer has reached zero.",
       });
-      const animationTimer = setTimeout(() => setTriggerFinishAnimation(false), 1000); // Match animation duration
+      const animationTimer = setTimeout(() => setTriggerFinishAnimation(false), 1000); 
       return () => clearTimeout(animationTimer);
     }
     return () => {
@@ -123,7 +123,7 @@ export default function CountdownFeature() {
       setIsRunning(true);
       if (isFinished) setIsFinished(false); 
     }
-    setTriggerFinishAnimation(false); // Reset flash on start
+    setTriggerFinishAnimation(false); 
   };
   
   const handlePause = () => setIsRunning(false);
@@ -132,7 +132,7 @@ export default function CountdownFeature() {
     setIsRunning(false);
     setIsFinished(false);
     setTriggerFinishAnimation(false);
-    const totalSeconds = calculateTotalSeconds();
+    const totalSeconds = calculateTotalSeconds(); // Recalculate from inputs for reset
     setInitialTime(totalSeconds);
     setTimeLeft(totalSeconds);
   };
@@ -144,6 +144,7 @@ export default function CountdownFeature() {
     setHoursInput(h.toString());
     setMinutesInput(m.toString());
     setSecondsInput(s.toString());
+    // These changes will trigger the useEffect to update initialTime and timeLeft
     setIsFinished(false); 
     setTriggerFinishAnimation(false);
     if (presetLabel) {
@@ -196,7 +197,7 @@ export default function CountdownFeature() {
       }
       return newTimeLeft;
     });
-    setInitialTime(prevInitial => Math.max(prevInitial, timeLeft + secondsToAdd)); // Adjust initialTime if adding beyond current
+    setInitialTime(prevInitial => Math.max(prevInitial, timeLeft + secondsToAdd)); 
   
     toast({
       title: "Time Added",
@@ -224,16 +225,22 @@ export default function CountdownFeature() {
   };
 
   const progressRatio = initialTime > 0 ? timeLeft / initialTime : 0;
-  const circularStrokeDashoffset = CIRCUMFERENCE_CD * (1 - progressRatio); // 0 is full, CIRCUMFERENCE_CD is empty
+  const circularStrokeDashoffset = CIRCUMFERENCE_CD * (1 - progressRatio); 
 
   const allPresets = [...DEFAULT_PRESETS, ...customPresets];
   
   const linearProgressPercentRemaining = initialTime > 0 ? (timeLeft / initialTime) * 100 : (isFinished ? 0 : 100);
+  
+  // Show "Add Time" section if timer is running, or paused with time left (but not at initial full time).
   const showAddTimeSection = isRunning || (timeLeft > 0 && timeLeft < initialTime && !isFinished && initialTime > 0);
+  
+  // Show Time Input & Presets if timer is not running AND (it's at its initial state OR time is zero/finished)
+  const showSetupSection = !isRunning && (initialTime === timeLeft || timeLeft <= 0);
+
 
   const timeDisplayClasses = cn(
     "font-bold tabular-nums font-headline",
-    currentVisualStyle === 'circular' ? "text-5xl" : "text-6xl",
+    currentVisualStyle === 'circular' ? "text-5xl" : "text-6xl", // text-5xl for circular to fit better
     currentVisualStyle === 'linear-intensity' && isRunning && timeLeft > 0 && timeLeft <= 20 ? "text-destructive transition-colors duration-500" : "text-primary",
   );
 
@@ -257,7 +264,7 @@ export default function CountdownFeature() {
 
             <div className={cn(
               "flex justify-center items-center",
-              currentVisualStyle === 'circular' ? "relative w-48 h-48 sm:w-52 sm:h-52" : "py-8" // Adjust padding for non-circular
+              currentVisualStyle === 'circular' ? "relative w-60 h-60 sm:w-64 sm:h-64" : "py-8" 
             )}>
               {currentVisualStyle === 'circular' && (
                 <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${VIEWBOX_SIZE_CD} ${VIEWBOX_SIZE_CD}`}>
@@ -301,24 +308,89 @@ export default function CountdownFeature() {
            <Progress value={linearProgressPercentRemaining} className="mb-6 h-3 [&>div]:bg-accent" />
         )}
         
-        {(!isRunning && (!isFinished || timeLeft <=0) ) && (
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <div>
-              <Label htmlFor="hours">Hours</Label>
-              <Input id="hours" type="number" min="0" value={hoursInput} onChange={e => setHoursInput(e.target.value)} placeholder="HH" />
+        {showSetupSection && (
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div>
+                <Label htmlFor="hours">Hours</Label>
+                <Input id="hours" type="number" min="0" value={hoursInput} onChange={e => setHoursInput(e.target.value)} placeholder="HH" />
+              </div>
+              <div>
+                <Label htmlFor="minutes">Minutes</Label>
+                <Input id="minutes" type="number" min="0" max="59" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} placeholder="MM" />
+              </div>
+              <div>
+                <Label htmlFor="seconds">Seconds</Label>
+                <Input id="seconds" type="number" min="0" max="59" value={secondsInput} onChange={e => setSecondsInput(e.target.value)} placeholder="SS" />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="minutes">Minutes</Label>
-              <Input id="minutes" type="number" min="0" max="59" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} placeholder="MM" />
+
+            <div className="my-6">
+              <h3 className="text-lg font-medium mb-3 text-center font-headline">Presets</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                {allPresets.map(preset => (
+                  <div
+                    key={preset.label}
+                    role="button"
+                    tabIndex={0} // Always focusable when visible
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "flex-col h-auto p-3 items-center justify-center relative group text-center cursor-pointer"
+                    )}
+                    onClick={() => applyPreset(preset.seconds, preset.label)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        applyPreset(preset.seconds, preset.label);
+                      }
+                    }}
+                  >
+                    <span className="font-semibold">{preset.label}</span>
+                    <span className="text-xs text-muted-foreground">{formatTime(preset.seconds)}</span>
+                    {!DEFAULT_PRESETS.find(dp => dp.label === preset.label) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80"
+                        onClick={(e) => {
+                          e.stopPropagation(); 
+                          handleDeleteCustomPreset(preset.label);
+                        }}
+                        aria-label={`Delete preset ${preset.label}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {allPresets.length === 0 && (
+                    <p className="text-sm text-muted-foreground col-span-full text-center">No presets available. Save one below!</p>
+                )}
+              </div>
+
+              <div className="mt-6 border-t pt-4">
+                <Label htmlFor="presetName" className="mb-1 block font-medium">Preset name to save</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="presetName"
+                    type="text"
+                    placeholder="Enter preset name..."
+                    value={newPresetName}
+                    onChange={(e) => setNewPresetName(e.target.value)}
+                  />
+                  <Button 
+                    onClick={handleSavePreset} 
+                    disabled={!newPresetName.trim() || calculateTotalSeconds() <=0} 
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Save className="mr-2 h-4 w-4" /> Save
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="seconds">Seconds</Label>
-              <Input id="seconds" type="number" min="0" max="59" value={secondsInput} onChange={e => setSecondsInput(e.target.value)} placeholder="SS" />
-            </div>
-          </div>
+          </>
         )}
 
-        {showAddTimeSection ? (
+        {showAddTimeSection && (
           <div className="my-6">
             <h3 className="text-lg font-medium mb-3 text-center font-headline">Add Time</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -332,82 +404,6 @@ export default function CountdownFeature() {
                 <PlusCircle className="mr-2 h-4 w-4" /> +10 min
               </Button>
             </div>
-          </div>
-        ) : (
-          (!isRunning && !isFinished || timeLeft <=0) && // Only show presets/save if timer is settable
-          <div className="my-6">
-            <h3 className="text-lg font-medium mb-3 text-center font-headline">Presets</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-              {allPresets.map(preset => (
-                <div
-                  key={preset.label}
-                  role="button"
-                  tabIndex={isRunning ? -1 : 0}
-                  aria-disabled={isRunning}
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "flex-col h-auto p-3 items-center justify-center relative group text-center",
-                    isRunning ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                  )}
-                  onClick={() => {
-                    if (!isRunning) {
-                      applyPreset(preset.seconds, preset.label);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      if (!isRunning) {
-                        applyPreset(preset.seconds, preset.label);
-                      }
-                    }
-                  }}
-                >
-                  <span className="font-semibold">{preset.label}</span>
-                  <span className="text-xs text-muted-foreground">{formatTime(preset.seconds)}</span>
-                  {!DEFAULT_PRESETS.find(dp => dp.label === preset.label) && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80"
-                      onClick={(e) => {
-                        e.stopPropagation(); 
-                        handleDeleteCustomPreset(preset.label);
-                      }}
-                      aria-label={`Delete preset ${preset.label}`}
-                      disabled={isRunning}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              {allPresets.length === 0 && (
-                  <p className="text-sm text-muted-foreground col-span-full text-center">No presets available. Save one below!</p>
-              )}
-            </div>
-
-            {(!isRunning && !showAddTimeSection) && (
-              <div className="mt-6 border-t pt-4">
-                <Label htmlFor="presetName" className="mb-1 block font-medium">Preset name to save</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="presetName"
-                    type="text"
-                    placeholder="Enter preset name..."
-                    value={newPresetName}
-                    onChange={(e) => setNewPresetName(e.target.value)}
-                    disabled={isRunning}
-                  />
-                  <Button 
-                    onClick={handleSavePreset} 
-                    disabled={isRunning || !newPresetName.trim() || calculateTotalSeconds() <=0} 
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    <Save className="mr-2 h-4 w-4" /> Save
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -437,3 +433,4 @@ export default function CountdownFeature() {
     </Card>
   );
 }
+
